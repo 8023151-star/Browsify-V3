@@ -3,134 +3,49 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>YouTube Embedder (thumbnail + fallback)</title>
+  <title>YouTube Embedder — in-page only</title>
   <style>
     :root{
-      --bg:#0b1220;
-      --card:#071827;
-      --accent:#ff4250;
-      --muted:#98a0b3;
+      --bg:#071827; --card:#0b1220; --muted:#98a0b3; --accent:#ff4250;
     }
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background:linear-gradient(180deg,#051022 0%, #071827 100%);
-      color:#e6eef8;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-    }
-    .card{
-      width:100%;
-      max-width:920px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:12px;
-      padding:18px;
-      box-shadow:0 8px 30px rgba(0,0,0,0.6);
-      border:1px solid rgba(255,255,255,0.03);
-    }
-    h1{ margin:0 0 10px 0; font-size:18px; }
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .input-wrap{
-      flex:1;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      background:rgba(255,255,255,0.02);
-      padding:8px;
-      border-radius:8px;
-    }
-    input[type="text"]{
-      flex:1;
-      background:transparent;
-      border:0;
-      outline:0;
-      color:var(--muted);
-      font-size:15px;
-      padding:6px;
-    }
-    button{
-      background:linear-gradient(180deg, #ff6b72, #ff4250);
-      color:white;
-      border:0;
-      padding:9px 14px;
-      border-radius:8px;
-      font-weight:600;
-      cursor:pointer;
-    }
-    .msg{ font-size:13px; color:#ffb3b8; margin-left:8px; }
-    .video-container{ margin-top:14px; border-radius:10px; overflow:hidden; background:#000; }
-    .video-inner{ position:relative; width:100%; padding-top:56.25%; /* 16:9 */ }
-    .poster, .video-iframe{
-      position:absolute; top:0; left:0; width:100%; height:100%;
-    }
-    .poster{
-      background-size:cover;
-      background-position:center;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-    }
-    .play-btn{
-      width:84px; height:54px;
-      background:rgba(0,0,0,0.6);
-      border-radius:12px;
-      display:flex; align-items:center; justify-content:center;
-      box-shadow:0 6px 18px rgba(0,0,0,0.6);
-      transition:transform .12s ease;
-    }
-    .play-btn:hover{ transform:scale(1.03) }
-    .play-triangle{
-      width:0;height:0;border-left:18px solid white;border-top:12px solid transparent;border-bottom:12px solid transparent;
-      margin-left:6px;
-    }
-    .fallback-row{ display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap; }
-    .link-btn{
-      background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.04); padding:8px 12px; border-radius:8px; text-decoration:none;
-    }
-    .hidden{ display:none!important; }
-    @media (max-width:560px){
-      .row{ flex-direction:column; align-items:stretch; }
-      button{ width:100%; }
-    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#051022,#071827);color:#e6eef8;display:flex;align-items:center;justify-content:center;padding:24px;}
+    .card{width:100%;max-width:920px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);}
+    .controls{display:flex;gap:10px;align-items:center;}
+    .input-wrap{flex:1;background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;display:flex;align-items:center;}
+    input[type="text"]{flex:1;background:transparent;border:0;outline:0;color:var(--muted);font-size:15px;padding:6px;}
+    button{background:linear-gradient(180deg,#ff6b72,var(--accent));color:#fff;border:0;padding:9px 14px;border-radius:8px;font-weight:600;cursor:pointer;}
+    .video-container{margin-top:16px;border-radius:10px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,0.02);}
+    .video-inner{position:relative;width:100%;padding-top:56.25%;}
+    #player{position:absolute;inset:0;}
+    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,0.45),rgba(0,0,0,0.55));color:#ffd6d6;padding:12px;text-align:center;font-size:15px;}
+    .hidden{display:none}
+    .status{margin-left:12px;font-size:13px;color:#ffb3b8}
+    @media (max-width:560px){ .controls{flex-direction:column;align-items:stretch} button{width:100%} }
   </style>
 </head>
 <body>
   <div class="card" role="main">
-    <h1>YouTube Embedder</h1>
-    <form id="embedForm" style="margin-bottom:6px">
-      <div class="row">
+    <h2 style="margin:0 0 10px 0;font-size:18px">YouTube Embedder (in-page only)</h2>
+    <form id="form">
+      <div class="controls">
         <div class="input-wrap">
-          <input id="urlInput" type="text" placeholder="YouTube link or video ID (e.g. https://www.youtube.com/watch?v=0e3GPea1Tyg)" aria-label="YouTube URL">
+          <input id="url" type="text" placeholder="Paste YouTube URL or video ID (e.g. https://www.youtube.com/watch?v=0e3GPea1Tyg)" aria-label="YouTube URL">
         </div>
         <button id="embedBtn" type="submit">Embed</button>
-        <div id="message" class="msg" role="status" aria-live="polite" hidden></div>
+        <div id="status" class="status" aria-live="polite" hidden></div>
       </div>
     </form>
 
-    <div id="resultArea" class="video-container hidden" aria-live="polite">
-      <div class="video-inner" id="videoInner">
-        <!-- Poster or iframe will be injected here -->
-      </div>
-      <div class="fallback-row" id="fallbackRow" style="padding:10px 6px; display:flex; align-items:center; gap:8px;">
-        <a id="openLink" class="link-btn" target="_blank" rel="noopener">Open on YouTube</a>
-        <span style="color:var(--muted);font-size:13px">If embedding is blocked by your viewer, open the video in a new tab.</span>
+    <div id="videoBox" class="video-container hidden" aria-live="polite">
+      <div class="video-inner">
+        <div id="player"></div>
+        <div id="errorOverlay" class="overlay hidden" role="alert"></div>
       </div>
     </div>
   </div>
 
   <script>
-    const form = document.getElementById('embedForm');
-    const input = document.getElementById('urlInput');
-    const resultArea = document.getElementById('resultArea');
-    const videoInner = document.getElementById('videoInner');
-    const message = document.getElementById('message');
-    const embedBtn = document.getElementById('embedBtn');
-    const openLink = document.getElementById('openLink');
-
+    // Helper: extract YouTube video ID from many URL formats or raw ID
     function extractYouTubeID(url) {
       if (!url) return null;
       url = url.trim();
@@ -139,118 +54,164 @@
         const parsed = new URL(url.includes('://') ? url : 'https://' + url);
         const v = parsed.searchParams.get('v');
         if (v && /^[A-Za-z0-9_-]{11}$/.test(v)) return v;
+        // common path positions
         const path = parsed.pathname || '';
-        // common capture positions
         let m = path.match(/(?:\/embed\/|\/v\/|\/shorts\/|\/watch\/|\/)([A-Za-z0-9_-]{11})(?:$|\/|\?)/);
         if (m && m[1]) return m[1];
         if (parsed.hostname && parsed.hostname.toLowerCase().includes('youtu.be')) {
           const maybe = parsed.pathname.replace(/^\/+/, '');
           if (/^[A-Za-z0-9_-]{11}$/.test(maybe)) return maybe;
         }
-      } catch (e) {
+      } catch(e) {
         // fallback regex
       }
       const gm = url.match(/(?:v=|v\/|embed\/|youtu\.be\/|\/shorts\/)([A-Za-z0-9_-]{11})/);
       return gm && gm[1] ? gm[1] : null;
     }
 
-    function showMessage(text, isError = true) {
-      message.hidden = false;
-      message.textContent = text;
-      message.style.color = isError ? '#ffb3b8' : '#9be7a2';
+    const form = document.getElementById('form');
+    const urlInput = document.getElementById('url');
+    const embedBtn = document.getElementById('embedBtn');
+    const status = document.getElementById('status');
+    const videoBox = document.getElementById('videoBox');
+    const playerContainer = document.getElementById('player');
+    const errorOverlay = document.getElementById('errorOverlay');
+
+    let ytReady = false;
+    let ytPlayer = null;
+    let playerCreateTimeout = null;
+
+    // Load YouTube IFrame API
+    (function loadYT(){
+      const s = document.createElement('script');
+      s.src = "https://www.youtube.com/iframe_api";
+      s.async = true;
+      s.onload = ()=>{ /* script injected */ };
+      document.head.appendChild(s);
+      // global callback required by YT API
+      window.onYouTubeIframeAPIReady = function() { ytReady = true; };
+    })();
+
+    function showStatus(msg, isError=false){
+      status.hidden = false;
+      status.textContent = msg;
+      status.style.color = isError ? '#ffb3b8' : '#9be7a2';
     }
-    function clearMessage(){ message.hidden = true; message.textContent = ''; }
+    function clearStatus(){ status.hidden = true; status.textContent = ''; }
 
-    function createPoster(id) {
-      videoInner.innerHTML = ''; // clear
-      const poster = document.createElement('div');
-      poster.className = 'poster';
-      // prefer maxresdefault but fallback to hqdefault if not available in some cases
-      const thumb = `https://img.youtube.com/vi/${encodeURIComponent(id)}/maxresdefault.jpg`;
-      // set background; we'll use an <img> to detect 404 and fallback if needed
-      poster.style.backgroundImage = `url("${thumb}")`;
+    function showErrorOverlay(text){
+      errorOverlay.textContent = text;
+      errorOverlay.classList.remove('hidden');
+    }
+    function hideErrorOverlay(){
+      errorOverlay.classList.add('hidden');
+      errorOverlay.textContent = '';
+    }
 
-      // hidden img to detect existence (if maxresdefault doesn't exist)
-      const probe = new Image();
-      probe.onload = function(){
-        // If naturalWidth looks small, use hqdefault instead
-        if ((this.naturalWidth && this.naturalWidth < 120) || (this.naturalHeight && this.naturalHeight < 90)) {
-          poster.style.backgroundImage = `url("https://img.youtube.com/vi/${encodeURIComponent(id)}/hqdefault.jpg")`;
+    function destroyPlayer(){
+      if (ytPlayer && typeof ytPlayer.destroy === 'function') {
+        try { ytPlayer.destroy(); } catch(e){ /* ignore */ }
+      }
+      ytPlayer = null;
+      playerContainer.innerHTML = '';
+      hideErrorOverlay();
+      clearTimeout(playerCreateTimeout);
+      playerCreateTimeout = null;
+    }
+
+    // Create or replace player given a videoId
+    function createPlayer(videoId) {
+      destroyPlayer();
+      // Show container
+      videoBox.classList.remove('hidden');
+      showStatus('Loading player...', false);
+      // Wait for YT API to be ready (up to a timeout)
+      const start = Date.now();
+      const waitForApi = () => {
+        if (ytReady) {
+          // Create player
+          // Use youtube-nocookie domain for privacy; player still respects embed restrictions.
+          ytPlayer = new YT.Player('player', {
+            videoId: videoId,
+            playerVars: {
+              rel: 0,
+              modestbranding: 1,
+              playsinline: 1
+            },
+            events: {
+              onReady: function(e){
+                clearStatus();
+                hideErrorOverlay();
+                // We do NOT auto-play; user can press play in the embedded player.
+              },
+              onError: function(e){
+                // YT error codes: 2, 5, 100, 101/150 (embedding disabled)
+                const code = e.data;
+                let msg = 'Unknown playback error (code ' + code + ').';
+                if (code === 2) msg = 'Invalid request to player (bad parameter).';
+                else if (code === 5) msg = 'HTML5 player error.';
+                else if (code === 100) msg = 'Video not found or removed.';
+                else if (code === 101 || code === 150) msg = 'Embedding is blocked by the video owner — this video cannot play inside other pages.';
+                else msg = 'Playback error (code ' + code + ').';
+                showErrorOverlay(msg);
+                showStatus('Embed error: ' + msg, true);
+              }
+            }
+          });
+          // safety timeout in case the player fails to become ready and no onError fires
+          playerCreateTimeout = setTimeout(() => {
+            // If player exists but still not providing UI, check if iframe exists
+            const iframe = playerContainer.querySelector('iframe');
+            if (!iframe) {
+              showErrorOverlay('Player could not be created. The environment may block iframes or external scripts.');
+              showStatus('Embedding appears blocked by your viewer/environment.', true);
+            }
+          }, 3500);
+        } else if (Date.now() - start < 7000) {
+          // wait a bit more
+          setTimeout(waitForApi, 150);
+        } else {
+          // API never became ready
+          showErrorOverlay('YouTube API failed to load — embedding not available in this environment.');
+          showStatus('YouTube API load failed; embedding not available.', true);
         }
       };
-      probe.onerror = function(){
-        poster.style.backgroundImage = `url("https://img.youtube.com/vi/${encodeURIComponent(id)}/hqdefault.jpg")`;
-      };
-      probe.src = thumb;
-
-      // play button
-      const play = document.createElement('div');
-      play.className = 'play-btn';
-      const tri = document.createElement('div');
-      tri.className = 'play-triangle';
-      play.appendChild(tri);
-      poster.appendChild(play);
-
-      // click to create iframe in place
-      poster.addEventListener('click', function () {
-        loadIframe(id);
-      });
-
-      videoInner.appendChild(poster);
+      waitForApi();
     }
 
-    function loadIframe(id) {
-      videoInner.innerHTML = '';
-      const iframe = document.createElement('iframe');
-      // use youtube-nocookie domain for privacy (may help in restrictive viewers)
-      const src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0&modestbranding=1&playsinline=1`;
-      iframe.className = 'video-iframe';
-      iframe.src = src;
-      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
-      iframe.setAttribute('allowfullscreen', '');
-      iframe.loading = 'lazy';
-      iframe.title = 'YouTube video player';
-      videoInner.appendChild(iframe);
-    }
-
-    form.addEventListener('submit', function (e) {
+    form.addEventListener('submit', function(e){
       e.preventDefault();
-      clearMessage();
-      const val = input.value.trim();
-      if (!val) {
-        showMessage('Paste a YouTube URL or video ID.', true);
-        return;
-      }
+      clearStatus();
+      hideErrorOverlay();
+      const val = urlInput.value.trim();
+      if (!val) { showStatus('Paste a YouTube URL or video ID.', true); return; }
       embedBtn.disabled = true;
-      embedBtn.textContent = 'Processing...';
+      embedBtn.textContent = 'Embedding...';
       const id = extractYouTubeID(val);
       if (!id) {
-        showMessage('Could not detect a YouTube video ID. Check the link.', true);
+        showStatus('Could not detect a YouTube video ID. Check the link.', true);
         embedBtn.disabled = false;
         embedBtn.textContent = 'Embed';
         return;
       }
+      // Attempt to create player
+      createPlayer(id);
 
-      // Show poster first (click poster to load iframe). This avoids autoplay/cookie issues
-      createPoster(id);
-      // show result area and fallback link
-      resultArea.classList.remove('hidden');
-      const watchUrl = `https://www.youtube.com/watch?v=${id}`;
-      openLink.href = watchUrl;
-      openLink.textContent = 'Open on YouTube';
-
-      showMessage('Poster loaded. Click the thumbnail to load the player, or open on YouTube.', false);
-      setTimeout(() => clearMessage(), 3500);
-
-      embedBtn.disabled = false;
-      embedBtn.textContent = 'Embed';
+      // Re-enable UI
+      setTimeout(()=>{ embedBtn.disabled = false; embedBtn.textContent = 'Embed'; }, 600);
     });
 
-    // Clear message on input
-    input.addEventListener('input', () => { if (!message.hidden) clearMessage(); });
+    // If user clears input, destroy player
+    urlInput.addEventListener('input', function(){
+      if (!urlInput.value.trim()) {
+        destroyPlayer();
+        videoBox.classList.add('hidden');
+        clearStatus();
+      }
+    });
 
-    // Optional: support paste+enter quick action
-    input.addEventListener('paste', () => { /* no-op but left for UX extension */ });
+    // On page unload, clean up
+    window.addEventListener('beforeunload', destroyPlayer);
   </script>
 </body>
 </html>
