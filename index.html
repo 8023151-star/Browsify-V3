@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browsify</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>🎵 Browsify</h1>
+    </header>
+
+    <main>
+      <ul id="song-list"></ul>
+    </main>
+  </div>
+
+  <footer id="player-bar">
+    <div id="player">
+      <span id="current-song">Select a song...</span>
+      <div class="controls">
+        <button id="prev-btn">Previous</button>
+        <button id="play-pause-btn">Play</button>
+        <button id="next-btn">Next</button>
+        <button id="shuffle-btn">Shuffle: Off</button>
+        <button id="repeat-btn">Loop: Playlist</button>
+      </div>
+      <div class="progress-container">
+        <span id="current-time">0:00</span>
+        <input type="range" id="progress" value="0" min="0" max="100" />
+        <span id="duration">0:00</span>
+      </div>
+      <div class="volume-container">
+        <span>🔊</span>
+        <input type="range" id="volume" value="100" min="0" max="100" />
+        <span id="volume-percent">100%</span>
+      </div>
+      <audio id="audio"></audio>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

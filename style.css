@@ -1,0 +1,158 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #121212;
+  color: #fff;
+}
+
+header {
+  background: #1db954;
+  padding: 1em;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+#song-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#song-list li {
+  padding: 0.8em 1em;
+  border-bottom: 1px solid #333;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#song-list li:hover {
+  background: #1db95433;
+}
+
+/* Floating sticky player bar */
+#player-bar {
+  position: sticky;
+  bottom: 0;
+  background: #181818;
+  border-top: 1px solid #333;
+  padding: 0.5em;
+  text-align: center;
+  z-index: 20;
+}
+
+#player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#current-song {
+  margin-bottom: 0.5em;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.controls {
+  display: flex;
+  gap: 0.5em;
+  margin-bottom: 0.5em;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.controls button {
+  background: #1db954;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  padding: 0.6em 1em;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-width: 80px;
+}
+
+.controls button:hover {
+  background: #17a74b;
+}
+
+.controls button.active {
+  background: #14833b;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.progress-container {
+  width: 90%;
+  margin-bottom: 0.5em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.progress-container span {
+  font-size: 0.9em;
+  color: #ccc;
+  min-width: 40px;
+}
+
+#progress {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #333;
+  outline: none;
+}
+
+.volume-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  width: 90%;
+  margin-top: 0.5em;
+}
+
+.volume-container span {
+  font-size: 0.9em;
+  color: #ccc;
+  min-width: 40px;
+}
+
+#volume {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #333;
+  outline: none;
+}
+
+#volume-percent {
+  min-width: 35px;
+  text-align: right;
+}
+
+audio {
+  display: none;
+}
+
+/* Progress bar styling for webkit browsers */
+#progress::-webkit-slider-thumb,
+#volume::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1db954;
+  cursor: pointer;
+}
+
+#progress::-moz-range-thumb,
+#volume::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1db954;
+  cursor: pointer;
+  border: none;
+}
