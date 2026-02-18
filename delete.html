@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YouTube Embedder</title>
+  <style>
+    /* Basic page layout */
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --accent:#ff4757;
+      --muted:#98a0b3;
+      --glass: rgba(255,255,255,0.03);
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background:linear-gradient(180deg,#071028 0%, #071827 60%, #071827 100%);
+      color:#e6eef8;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+    }
+
+    .card{
+      width:100%;
+      max-width:920px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;
+      padding:18px;
+      box-shadow:0 6px 30px rgba(2,6,23,0.6);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
+    .input-wrap{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:var(--glass);
+      padding:8px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.02);
+    }
+
+    input[type="text"]{
+      flex:1;
+      background:transparent;
+      border:0;
+      outline:0;
+      color:var(--muted);
+      font-size:15px;
+      padding:8px;
+    }
+
+    button{
+      background:linear-gradient(180deg, #ff6b72, #ff4250);
+      color:white;
+      border:0;
+      padding:9px 14px;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+      box-shadow:0 6px 18px rgba(255,66,80,0.12);
+      transition:transform .12s ease, box-shadow .12s ease, opacity .12s;
+    }
+    button:hover{ transform:translateY(-2px) }
+    button:active{ transform:translateY(0) }
+    button:disabled{ opacity:.6; cursor:not-allowed }
+
+    .small{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:8px;
+    }
+
+    /* Video container keeps 16:9 ratio */
+    .video-container{
+      margin-top:16px;
+      background:#000;
+      border-radius:10px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    .video-inner{
+      position:relative;
+      width:100%;
+      padding-top:56.25%; /* 16:9 ratio */
+    }
+    .video-inner iframe{
+      position:absolute;
+      top:0; left:0;
+      width:100%; height:100%;
+      border:0;
+    }
+
+    .msg{
+      margin-left:12px;
+      font-size:13px;
+      color:#ffb3b8;
+    }
+
+    /* responsive */
+    @media (max-width:540px){
+      .row{ flex-direction:column; align-items:stretch; gap:8px; }
+      .msg{ margin-left:0; margin-top:6px; }
+      .input-wrap{ padding:6px; }
+      button{ width:100%; padding:10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="main">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <h2 style="margin:0;font-size:18px">YouTube Embedder</h2>
+      <div class="small">Paste a YouTube link and click Embed</div>
+    </div>
+
+    <form id="embedForm" style="margin-top:12px">
+      <div class="row">
+        <div class="input-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="opacity:.85">
+            <path d="M10.9 3.6C12.5 3.5 14.2 3.5 15.8 3.6 17.4 3.7 18.6 4.5 19.5 5.4 20.5 6.4 21.2 7.7 21.3 9.2 21.5 10.8 21.5 12.5 21.5 14.1 21.4 15.7 21 17.2 20.2 18.4 19.4 19.6 18.2 20.4 16.7 20.6 15.1 20.7 13.5 20.7 11.8 20.7 10.2 20.7 8.6 20.6 7.3 19.9" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input id="urlInput" type="text" placeholder="https://youtu.be/dQw4w9WgXcQ or https://www.youtube.com/watch?v=dQw4w9WgXcQ" aria-label="YouTube URL">
+        </div>
+        <button id="embedBtn" type="submit">Embed</button>
+        <div id="message" class="msg" role="status" aria-live="polite" hidden></div>
+      </div>
+    </form>
+
+    <div id="result" class="video-container" hidden>
+      <div class="video-inner" id="videoInner">
+        <!-- iframe will be injected here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Grabs DOM elements
+    const form = document.getElementById('embedForm');
+    const input = document.getElementById('urlInput');
+    const result = document.getElementById('result');
+    const videoInner = document.getElementById('videoInner');
+    const message = document.getElementById('message');
+    const embedBtn = document.getElementById('embedBtn');
+
+    // Extract YouTube video ID from several URL formats
+    function extractYouTubeID(url) {
+      if (!url || typeof url !== 'string') return null;
+      url = url.trim();
+
+      // If user pasted only an ID
+      if (/^[A-Za-z0-9_-]{11}$/.test(url)) return url;
+
+      // Try parsing as URL to help with search params
+      try {
+        const parsed = new URL(url.includes('://') ? url : 'https://' + url);
+        // Check search params first (v=)
+        const v = parsed.searchParams.get('v');
+        if (v && /^[A-Za-z0-9_-]{11}$/.test(v)) return v;
+
+        // Path-based formats: /watch, /embed/ID, /v/ID, /shorts/ID or youtu.be/ID
+        const path = parsed.pathname || '';
+        // common regex: capture 11-char id in common positions
+        const rx = /(?:\/embed\/|\/v\/|\/shorts\/|\/watch\/|\/)([A-Za-z0-9_-]{11})(?:$|\/|\?)/;
+        const m = path.match(rx);
+        if (m && m[1]) return m[1];
+
+        // youtu.be cases where pathname begins with /ID
+        if (parsed.hostname && parsed.hostname.toLowerCase().includes('youtu.be')) {
+          const maybe = parsed.pathname.replace(/^\/+/, '');
+          if (/^[A-Za-z0-9_-]{11}$/.test(maybe)) return maybe;
+        }
+
+      } catch (err) {
+        // Not a full URL - fall back to regex matching inside the string
+      }
+
+      // Last ditch: global regex search
+      const globalRx = /(?:v=|v\/|embed\/|youtu\.be\/|\/shorts\/)([A-Za-z0-9_-]{11})/;
+      const gm = url.match(globalRx);
+      if (gm && gm[1]) return gm[1];
+
+      return null;
+    }
+
+    // Show message text (error or info)
+    function showMessage(text, isError = true) {
+      message.hidden = false;
+      message.textContent = text;
+      message.style.color = isError ? '#ffb3b8' : '#9be7a2';
+    }
+
+    // Clear message
+    function clearMessage() {
+      message.hidden = true;
+      message.textContent = '';
+    }
+
+    // Create and insert iframe for the given video ID
+    function embedVideo(id) {
+      // Remove existing content
+      videoInner.innerHTML = '';
+      // Build src - parameters: modestbranding & rel=0
+      const src = `https://www.youtube.com/embed/${encodeURIComponent(id)}?rel=0&amp;showinfo=0`;
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('src', src);
+      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+      iframe.setAttribute('allowfullscreen', '');
+      iframe.setAttribute('title', 'YouTube video player');
+      videoInner.appendChild(iframe);
+      result.hidden = false;
+    }
+
+    // Handle form submit (Embed button or Enter)
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      clearMessage();
+
+      const value = input.value.trim();
+      if (!value) {
+        showMessage('Please paste a YouTube URL or video ID.');
+        return;
+      }
+
+      // Provide immediate feedback
+      embedBtn.disabled = true;
+      embedBtn.textContent = 'Embedding...';
+
+      // Extract video ID
+      const id = extractYouTubeID(value);
+      if (!id) {
+        showMessage('Could not detect a YouTube video ID. Check the link.', true);
+        embedBtn.disabled = false;
+        embedBtn.textContent = 'Embed';
+        return;
+      }
+
+      // Embed and reset button
+      embedVideo(id);
+      showMessage('Video embedded successfully.', false);
+      setTimeout(() => clearMessage(), 2000);
+
+      embedBtn.disabled = false;
+      embedBtn.textContent = 'Embed';
+    });
+
+    // Allow clearing message when user types
+    input.addEventListener('input', () => {
+      if (!message.hidden) clearMessage();
+    });
+
+    // Optional: paste handler - auto-embed if user pastes then presses Enter; left as basic UX
+    // Pre-fill with example on first load to show functionality (comment out if not desired)
+    // input.value = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+    // embedVideo("dQw4w9WgXcQ");
+  </script>
+</body>
+</html>
